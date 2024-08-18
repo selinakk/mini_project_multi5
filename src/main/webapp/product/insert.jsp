@@ -10,7 +10,7 @@
 <jsp:include page="../include/header.jsp"/>
 <div class="container">
   <h2>상품 등록</h2>
-    <form action="p_insertOK.do" method="post">
+    <form action="p_insertOK.do" method="post" enctype="multipart/form-data">
       <table>
         <tr>
           <td><label for="product_id">상품코드</label></td>
@@ -28,7 +28,7 @@
         </tr>
         <tr>
           <td><label for="thumbnail">썸네일</label></td>
-          <td><input type="text" id="thumbnail" name="thumbnail" value="img_chicken.jpeg"></td>
+          <td><input type="file" name="thumbnail" id="thumbnail"></td>
         </tr>
         <tr>
           <td><label for="price">가격</label></td>

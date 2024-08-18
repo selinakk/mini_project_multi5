@@ -13,8 +13,17 @@ import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.*;
 import jakarta.servlet.annotation.*;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.annotation.WebServlet;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.Part;
+import jakarta.servlet.annotation.MultipartConfig;
+
 
 @WebServlet({"/p_insert.do","/p_insertOK.do","/p_update.do","/p_updateOK.do","/p_delete.do","/p_deleteOK.do","/p_view.do","/p_list.do","/p_searchList.do"})
+@MultipartConfig
 public class ProductController extends HttpServlet {
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
         String sPath = request.getServletPath();
@@ -26,18 +35,52 @@ public class ProductController extends HttpServlet {
             RequestDispatcher rd = request.getRequestDispatcher("product/insert.jsp");
             rd.forward(request,response);
         } else if (sPath.equals("/p_insertOK.do")) {
+            // 폼 필드 데이터 가져오기
             String product_id = request.getParameter("product_id");
             String product_name = request.getParameter("product_name");
             String mfr = request.getParameter("mfr");
-            String thumbnail = request.getParameter("thumbnail");
             String price = request.getParameter("price");
-            System.out.println("상품코드: "+product_id+" 상품명: "+product_name+" 제조사: "+mfr+" 이미지경로: "+thumbnail+" 가격: "+price);
+            System.out.println("상품코드: "+product_id+" 상품명: "+product_name+" 제조사: "+mfr+" 가격: "+price);
+
+            // 파일 필드 처리 (썸네일)
+            Part filePart = request.getPart("thumbnail"); // 파일 필드명으로 part 가져오기
+
+            // 파일이 null인지 확인
+            if (filePart != null && filePart.getSize() > 0) {
+                String contentDisposition = filePart.getHeader("content-disposition");
+
+                // 파일명 추출 (Content-Disposition 헤더에서)
+                String thumbnail = null;
+                for (String cd : contentDisposition.split(";")) {
+                    if (cd.trim().startsWith("filename")) {
+                        thumbnail = cd.substring(cd.indexOf('=') + 1).trim().replace("\"", "");
+                    }
+                }
+
+                // 파일을 저장할 경로 설정
+                String uploadPath = getServletContext().getRealPath("") + File.separator + "assets/img";
+                File uploadDir = new File(uploadPath);
+                if (!uploadDir.exists()) {
+                    uploadDir.mkdir(); // 디렉토리가 없으면 생성
+                }
+
+                // 파일 저장
+                if (thumbnail != null && !thumbnail.isEmpty()) {
+                    filePart.write(uploadPath + File.separator + thumbnail);
+                }
+
+                // 콘솔에 출력
+                System.out.println("썸네일: " + thumbnail);
+            } else {
+                System.out.println("파일이 업로드되지 않았습니다.");
+                // 파일이 없을 경우 기본 이미지 설정 또는 예외 처리 로직 추가 가능
+            }
 
             ProductVO vo = new ProductVO();
             vo.setProduct_id(product_id);
             vo.setProduct_name(product_name);
             vo.setMfr(mfr);
-            vo.setThumbnail(thumbnail);
+            vo.setThumbnail(filePart != null ? filePart.getSubmittedFileName() : "void.jpg"); // 썸네일 파일명 설정
             vo.setPrice(Integer.parseInt(price));
 
             int result = dao.insert(vo);
@@ -51,12 +94,12 @@ public class ProductController extends HttpServlet {
         } else if (sPath.equals("/p_update.do")) {
             String product_id = request.getParameter("product_id");
             System.out.println(product_id);
-            
+
             ProductVO vo = new ProductVO();
             vo.setProduct_id(product_id);
             ProductVO vo2 = dao.selectOne(vo);
             request.setAttribute("vo2",vo2);
-            
+
             RequestDispatcher rd = request.getRequestDispatcher("product/update.jsp");
             rd.forward(request,response);
         } else if (sPath.equals("/p_updateOK.do")) {
@@ -73,7 +116,7 @@ public class ProductController extends HttpServlet {
             vo.setMfr(mfr);
             vo.setThumbnail(thumbnail);
             vo.setPrice(Integer.parseInt(price));
-            
+
             int result = dao.update(vo);
             if(result == 1){
                 System.out.println("updated...");
@@ -111,7 +154,7 @@ public class ProductController extends HttpServlet {
 
             List<ReviewVO> rlist = rdao.selectAll(product_id);
             request.setAttribute("rlist",rlist);
-            
+
             RequestDispatcher rd = request.getRequestDispatcher("product/selectOne.jsp");
             rd.forward(request,response);
         } else if (sPath.equals("/p_list.do")) {
