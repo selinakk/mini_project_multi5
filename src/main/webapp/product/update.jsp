@@ -10,7 +10,7 @@
   <jsp:include page="../include/header.jsp"/>
     <div class="container">
       <h2>상품 수정</h2>
-    <form action="p_updateOK.do" method="post">
+    <form action="p_updateOK.do" method="post" enctype="multipart/form-data">
       <input type="hidden" id="product_id" name="product_id" value="${vo2.product_id}">
       <table>
         <tr>
@@ -27,7 +27,7 @@
         </tr>
         <tr>
           <td><label for="thumbnail">썸네일</label></td>
-          <td><input type="text" id="thumbnail" name="thumbnail" value="${vo2.thumbnail}"></td>
+          <td><input type="file" name="thumbnail" id="thumbnail" value="${vo2.thumbnail}"></td>
         </tr>
         <tr>
           <td><label for="price">가격</label></td>
